@@ -3,8 +3,8 @@ INSA summer camp, CyberSecurity Dept. Group 20.
 
 # IoT Honeypot with Real-Time Attack Visualization
  # Project Highlight
-        This project builds a software-based honeypot that simulates vulnerable IoT devices (like smart cameras, routers, or thermostats)          to attract and trap attackers. By capturing attacker activity and commands, the system collects data on emerging threats targeting         IoT devices.
-        A real-time web dashboard will visualize this data, showing where attacks come from, what commands attackers use, and how                  frequently attacks happen. This helps defenders understand attacker behavior and improve IoT security.
+        • This project builds a software-based honeypot that simulates vulnerable IoT devices (like smart cameras, routers, or thermostats)to attract and trap attackers. By capturing attacker activity and commands, the system collects data on emerging threats targeting IoT devices.
+        • A real-time web dashboard will visualize this data, showing where attacks come from, what commands attackers used, and how frequently attacks happen. This helps defenders understand attacker behavior and improve IoT security.
 # Importance
         •	IoT devices are among the most vulnerable targets on the internet due to poor security.
         •	Attackers and automated bots constantly scan for easy IoT targets.
