@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Fake IP Camera Dashboard</title>
+</head>
+<body>
+<h1>Camera Dashboard</h1>
+<video width="640" height="480" autoplay loop>
+    <source src="/video_feed" type="multipart/x-mixed-replace; boundary=frame">
+</video>
+
+<h2>Login</h2>
+<form method="post" action="/login">
+    Username: <input type="text" name="username" />
+    Password: <input type="password" name="password" />
+    <input type="submit" value="Login" />
+</form>
+</body>
+</html>
