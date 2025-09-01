@@ -1,13 +1,30 @@
 import { useState, useEffect } from 'react'
-import { Sun, Moon, Shield, Eye, EyeOff, Lock, User } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle
+} from '@/components/ui/card'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Shield, Eye, EyeOff, Lock, User, Sun, Moon } from 'lucide-react'
 
+// Theme Toggle Hook
 const useTheme = () => {
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'dark')
+
   useEffect(() => {
-    if (theme === 'dark') document.documentElement.classList.add('dark')
-    else document.documentElement.classList.remove('dark')
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark')
+    } else {
+      document.documentElement.classList.remove('dark')
+    }
     localStorage.setItem('theme', theme)
   }, [theme])
+
   return { theme, toggleTheme: () => setTheme(theme === 'dark' ? 'light' : 'dark') }
 }
 
@@ -18,124 +35,153 @@ const Login = ({ onLogin }) => {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
+  // Mock users
   const mockUsers = [
     { username: 'admin', password: 'admin123', role: 'admin', name: 'Administrator' },
     { username: 'user', password: 'user123', role: 'user', name: 'Security Analyst' },
+    { username: 'analyst', password: 'analyst123', role: 'user', name: 'Threat Analyst' }
   ]
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
     setError('')
-    setTimeout(() => {
-      const user = mockUsers.find(
-        (u) => u.username === formData.username && u.password === formData.password
-      )
-      if (user) onLogin({ username: user.username, role: user.role, name: user.name })
-      else setError('Invalid username or password')
-      setLoading(false)
-    }, 1000)
+
+    await new Promise((resolve) => setTimeout(resolve, 1000))
+
+    const user = mockUsers.find(
+      (u) => u.username === formData.username && u.password === formData.password
+    )
+
+    if (user) {
+      onLogin({ username: user.username, role: user.role, name: user.name })
+    } else {
+      setError('Invalid username or password')
+    }
+
+    setLoading(false)
+  }
+
+  const handleInputChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value })
+    setError('')
   }
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center overflow-hidden">
-      {/* Animated Gradient Background */}
-      <div className="absolute inset-0">
-        <div className="absolute inset-0 animate-gradient bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 opacity-70 blur-3xl scale-150"></div>
-        <div className="absolute inset-0 animate-gradient2 bg-gradient-to-r from-yellow-400 via-green-400 to-blue-400 opacity-60 blur-2xl scale-125"></div>
-      </div>
-
-      {/* Login Card */}
-      <div className="relative z-10 w-full max-w-md bg-white/80 dark:bg-gray-900/70 backdrop-blur-xl border border-gray-200 dark:border-gray-700 rounded-3xl shadow-2xl p-8">
-        {/* Theme Toggle */}
-        <button
-          onClick={toggleTheme}
-          className="absolute top-4 right-4 p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition"
-        >
-          {theme === 'dark' ? <Sun className="h-5 w-5 text-yellow-400" /> : <Moon className="h-5 w-5 text-gray-800" />}
-        </button>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-purple-100 to-slate-200 dark:from-slate-950 dark:via-purple-950 dark:to-slate-900 transition-colors duration-500 p-6">
+      <Card className="w-full max-w-md bg-white/70 dark:bg-white/10 border border-black/10 dark:border-white/20 backdrop-blur-xl shadow-2xl rounded-2xl transition-colors duration-500">
+        {/* Theme Toggle Button */}
+        <div className="absolute top-4 right-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleTheme}
+            className="rounded-full"
+          >
+            {theme === 'dark' ? (
+              <Sun className="h-5 w-5 text-yellow-400" />
+            ) : (
+              <Moon className="h-5 w-5 text-slate-700" />
+            )}
+          </Button>
+        </div>
 
         {/* Header */}
-        <div className="text-center mb-6">
-          <div className="mx-auto w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg mb-2 animate-pulse">
+        <CardHeader className="space-y-4 text-center">
+          <div className="mx-auto w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
             <Shield className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
-            IoT Honeypot Dashboard
-          </h1>
-          <p className="text-gray-600 dark:text-gray-300 mt-1">Secure access to the threat intelligence platform</p>
-        </div>
-
-        {/* Error */}
-        {error && <div className="bg-red-200 text-red-800 p-2 rounded mb-4">{error}</div>}
-
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="relative">
-            <User className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
-            <input
-              type="text"
-              name="username"
-              placeholder="Username"
-              value={formData.username}
-              onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-              className="w-full pl-10 p-3 border rounded-xl focus:ring-2 focus:ring-purple-500 transition"
-              required
-            />
+          <div>
+            <CardTitle className="text-2xl font-bold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
+              IoT Honeypot Dashboard
+            </CardTitle>
+            <CardDescription className="text-muted-foreground mt-2">
+              Secure access to the threat intelligence platform
+            </CardDescription>
           </div>
-          <div className="relative">
-            <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
-            <input
-              type={showPassword ? 'text' : 'password'}
-              name="password"
-              placeholder="Password"
-              value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              className="w-full pl-10 pr-10 p-3 border rounded-xl focus:ring-2 focus:ring-purple-500 transition"
-              required
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-3 text-gray-500"
+        </CardHeader>
+
+        {/* Body */}
+        <CardContent className="space-y-6">
+          {error && (
+            <Alert variant="destructive" className="animate-in fade-in slide-in-from-top-2">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Username */}
+            <div className="space-y-2">
+              <Label htmlFor="username">Username</Label>
+              <div className="relative">
+                <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="username"
+                  name="username"
+                  type="text"
+                  placeholder="Enter your username"
+                  value={formData.username}
+                  onChange={handleInputChange}
+                  className="pl-10 h-12 rounded-xl focus:ring-2 focus:ring-purple-500 transition"
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Password */}
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="password"
+                  name="password"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Enter your password"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  className="pl-10 pr-10 h-12 rounded-xl focus:ring-2 focus:ring-purple-500 transition"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-3 h-5 w-5 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </button>
+              </div>
+            </div>
+
+            {/* Button */}
+            <Button
+              type="submit"
+              className="w-full h-12 rounded-xl bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-medium transition-all duration-200 transform hover:scale-[1.02] shadow-md"
+              disabled={loading}
             >
-              {showPassword ? <EyeOff /> : <Eye />}
-            </button>
+              {loading ? (
+                <div className="flex items-center space-x-2">
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <span>Authenticating...</span>
+                </div>
+              ) : (
+                'Sign In'
+              )}
+            </Button>
+          </form>
+
+          {/* Demo Info */}
+          <div className="text-center space-y-2 pt-4">
+            <div className="text-xs text-muted-foreground font-medium">
+              Demo Credentials:
+            </div>
+            <div className="text-xs space-y-1 text-muted-foreground">
+              <div>Admin → <span className="font-semibold">admin / admin123</span></div>
+              <div>User → <span className="font-semibold">user / user123</span></div>
+            </div>
           </div>
-          <button
-            type="submit"
-            className="w-full p-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-medium rounded-xl hover:scale-[1.03] transition transform shadow-lg"
-            disabled={loading}
-          >
-            {loading ? 'Authenticating...' : 'Sign In'}
-          </button>
-        </form>
-
-        {/* Demo Info */}
-        <div className="text-center mt-4 text-gray-600 dark:text-gray-300 text-xs">
-          Admin: admin / admin123<br />
-          User: user / user123
-        </div>
-      </div>
-
-      {/* Gradient Animation CSS */}
-      <style>
-        {`
-        @keyframes gradient {
-          0% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
-          100% { background-position: 0% 50%; }
-        }
-        .animate-gradient {
-          background-size: 200% 200%;
-          animation: gradient 15s ease infinite;
-        }
-        .animate-gradient2 {
-          background-size: 200% 200%;
-          animation: gradient 20s ease-in-out infinite;
-        }
-        `}
-      </style>
+        </CardContent>
+      </Card>
     </div>
   )
 }
