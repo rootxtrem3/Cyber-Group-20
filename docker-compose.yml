@@ -1,0 +1,51 @@
+# docker-compose.yml
+version: '3.8'
+
+services:
+  data-processor:
+    build: .
+    container_name: iot-data-processor
+    volumes:
+      - ./logs:/app/logs
+      - /path/to/geolite/db:/data  # Mount GeoIP database
+    environment:
+      - MONGODB_URL=mongodb://mongodb:27017/
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+      - REDIS_CHANNEL=honeypot-events
+      - GEOIP_DB_PATH=/data/GeoLite2-City.mmdb
+    depends_on:
+      - mongodb
+      - redis
+    networks:
+      - honeypot-net
+    restart: unless-stopped
+
+  mongodb:
+    image: mongo:5
+    container_name: iot-mongodb
+    volumes:
+      - mongodb_data:/data/db
+    environment:
+      - MONGO_INITDB_DATABASE=honeypot
+    networks:
+      - honeypot-net
+    restart: unless-stopped
+
+  redis:
+    image: redis:6-alpine
+    container_name: iot-redis
+    volumes:
+      - redis_data:/data
+    networks:
+      - honeypot-net
+    restart: unless-stopped
+
+volumes:
+  mongodb_data:
+  redis_data:
+
+networks:
+  honeypot-net:
+    driver: bridge
