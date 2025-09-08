@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IoT Sentinel // Honeypot Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <style>
+        body {
+            background-color: #0a0a0a;
+            color: #f0f0f0;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        .card {
+            background-color: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+        .card:hover {
+            border-color: rgba(0, 255, 255, 0.5);
+            transform: translateY(-2px);
+        }
+        .table-glow tr {
+            transition: background-color 0.3s ease;
+        }
+        .table-glow tr:hover {
+            background-color: rgba(0, 255, 255, 0.05);
+        }
+        /* Custom scrollbar for a futuristic look */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1a1a1a; }
+        ::-webkit-scrollbar-thumb { background: #00ffff; border-radius: 4px;}
+        ::-webkit-scrollbar-thumb:hover { background: #00cccc; }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <header class="mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-cyan-400 tracking-widest">IOT SENTINEL</h1>
+            <p class="text-gray-400">Live Honeypot Network Analysis</p>
+        </header>
+
+        <!-- Main Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            
+            <!-- Column 1: Stats & Charts -->
+            <div class="md:col-span-1 space-y-6">
+                <!-- Stat Cards -->
+                <div class="card p-4 rounded-lg">
+                    <h2 class="text-sm text-gray-400 mb-2">TOTAL EVENTS</h2>
+                    <p id="total-events" class="text-4xl font-bold text-cyan-400">0</p>
+                </div>
+                <div class="card p-4 rounded-lg">
+                    <h2 class="text-sm text-gray-400 mb-2">UNIQUE ATTACKERS</h2>
+                    <p id="unique-ips" class="text-4xl font-bold text-cyan-400">0</p>
+                </div>
+                
+                <!-- Events by Service Chart -->
+                <div class="card p-4 rounded-lg">
+                    <h2 class="text-sm text-gray-400 mb-2">EVENTS BY SERVICE</h2>
+                    <canvas id="serviceChart"></canvas>
+                </div>
+
+                <!-- Top IPs List -->
+                <div class="card p-4 rounded-lg">
+                    <h2 class="text-sm text-gray-400 mb-2">TOP SOURCE IPS</h2>
+                    <ul id="top-ips-list" class="space-y-1 text-sm">
+                        <!-- JS will populate this -->
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Column 2: Live Events Log -->
+            <div class="md:col-span-2 space-y-6">
+                <div class="card p-4 rounded-lg">
+                    <h2 class="text-sm text-gray-400 mb-2">ATTACK TIMELINE (LAST 24H)</h2>
+                    <div class="h-64"><canvas id="timelineChart"></canvas></div>
+                </div>
+
+                <div class="card p-4 rounded-lg">
+                    <h2 class="text-sm text-gray-400 mb-2">LIVE EVENT LOG</h2>
+                    <div class="overflow-x-auto max-h-96">
+                        <table class="w-full text-left text-sm table-glow">
+                            <thead class="sticky top-0 bg-black/50 backdrop-blur-sm">
+                                <tr>
+                                    <th class="p-2">Timestamp</th>
+                                    <th class="p-2">Service</th>
+                                    <th class="p-2">Source IP</th>
+                                    <th class="p-2">Type</th>
+                                    <th class="p-2">Details</th>
+                                </tr>
+                            </thead>
+                            <tbody id="events-table">
+                                <!-- JS will populate this -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Chart instances
+        let serviceChart, timelineChart;
+
+        const serviceColors = {
+            'telnet': 'rgba(255, 99, 132, 0.7)',
+            'http': 'rgba(54, 162, 235, 0.7)',
+            'mqtt': 'rgba(255, 206, 86, 0.7)'
+        };
+
+        function initializeCharts() {
+            const serviceCtx = document.getElementById('serviceChart').getContext('2d');
+            serviceChart = new Chart(serviceCtx, {
+                type: 'doughnut',
+                data: { labels: [], datasets: [{ data: [], backgroundColor: [] }] },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { labels: { color: '#f0f0f0' } } }
+                }
+            });
+
+            const timelineCtx = document.getElementById('timelineChart').getContext('2d');
+            timelineChart = new Chart(timelineCtx, {
+                type: 'line',
+                data: { datasets: [{ 
+                    label: 'Events', 
+                    data: [], 
+                    borderColor: '#00ffff',
+                    backgroundColor: 'rgba(0, 255, 255, 0.1)',
+                    fill: true,
+                    tension: 0.3
+                }] },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { 
+                            type: 'time', 
+                            time: { unit: 'hour' },
+                            ticks: { color: '#888' },
+                            grid: { color: 'rgba(255,255,255,0.05)'}
+                        },
+                        y: { 
+                            beginAtZero: true, 
+                            ticks: { color: '#888', precision: 0 },
+                            grid: { color: 'rgba(255,255,255,0.05)'}
+                        }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        async function fetchStats() {
+            try {
+                const response = await fetch('/api/stats');
+                const stats = await response.json();
+
+                document.getElementById('total-events').textContent = stats.total_events || 0;
+                document.getElementById('unique-ips').textContent = stats.unique_ips || 0;
+
+                // Update Service Chart
+                const serviceLabels = Object.keys(stats.events_by_service);
+                const serviceData = Object.values(stats.events_by_service);
+                const backgroundColors = serviceLabels.map(label => serviceColors[label] || '#cccccc');
+                serviceChart.data.labels = serviceLabels;
+                serviceChart.data.datasets[0].data = serviceData;
+                serviceChart.data.datasets[0].backgroundColor = backgroundColors;
+                serviceChart.update();
+
+                // Update Timeline Chart
+                const timelineData = Object.entries(stats.events_over_time).map(([time, count]) => ({x: new Date(time).valueOf(), y: count}));
+                timelineChart.data.datasets[0].data = timelineData;
+                timelineChart.update();
+
+                // Update Top IPs list
+                const topIpsList = document.getElementById('top-ips-list');
+                topIpsList.innerHTML = '';
+                Object.entries(stats.top_ips).forEach(([ip, count]) => {
+                    const li = document.createElement('li');
+                    li.className = 'flex justify-between';
+                    li.innerHTML = `<span>${ip}</span><span class="text-gray-400">${count}</span>`;
+                    topIpsList.appendChild(li);
+                });
+
+            } catch (error) {
+                console.error("Error fetching stats:", error);
+            }
+        }
+
+        async function fetchEvents() {
+            try {
+                const response = await fetch('/api/events');
+                const events = await response.json();
+                const tableBody = document.getElementById('events-table');
+                tableBody.innerHTML = ''; // Clear existing rows
+
+                events.forEach(event => {
+                    const row = document.createElement('tr');
+                    row.className = 'border-b border-gray-800';
+
+                    const details = JSON.parse(event.event_data);
+                    let detailsString = '';
+                    if(event.service === 'telnet') {
+                        detailsString = `user: ${details.username}, pass: ${details.password}`;
+                    } else if(event.service === 'http') {
+                        detailsString = `${details.method} ${details.path}`;
+                    } else {
+                        detailsString = details.message;
+                    }
+
+                    row.innerHTML = `
+                        <td class="p-2 text-gray-400">${new Date(event.timestamp).toLocaleTimeString()}</td>
+                        <td class="p-2" style="color:${serviceColors[event.service] || '#fff'}">${event.service}</td>
+                        <td class="p-2 text-yellow-400">${event.source_ip}</td>
+                        <td class="p-2">${event.event_type}</td>
+                        <td class="p-2 break-all text-gray-300">${detailsString.substring(0, 50)}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            } catch (error) {
+                console.error("Error fetching events:", error);
+            }
+        }
+
+        // Initial load and interval setup
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeCharts();
+            fetchStats();
+            fetchEvents();
+
+            setInterval(() => {
+                fetchStats();
+                fetchEvents();
+            }, 5000); // Refresh every 5 seconds
+        });
+    </script>
+</body>
+</html>

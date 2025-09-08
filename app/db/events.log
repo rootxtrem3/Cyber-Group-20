@@ -1,0 +1,12 @@
+{"timestamp": "2025-09-06T13:46:08.758410", "service": "telnet", "source_ip": "192.168.65.1", "source_port": 28170, "event_type": "connection_established", "details": {"message": "New connection to telnet honeypot"}}
+{"timestamp": "2025-09-06T13:46:28.106696", "service": "telnet", "source_ip": "192.168.65.1", "source_port": 28170, "event_type": "login_attempt", "details": {"username": "admin", "password": "admin"}}
+{"timestamp": "2025-09-06T13:46:31.307635", "service": "telnet", "source_ip": "192.168.65.1", "source_port": 46709, "event_type": "connection_established", "details": {"message": "New connection to telnet honeypot"}}
+{"timestamp": "2025-09-06T13:46:32.149742", "service": "telnet", "source_ip": "192.168.65.1", "source_port": 46709, "event_type": "login_attempt", "details": {"username": "", "password": ""}}
+{"timestamp": "2025-09-06T13:47:10.980966", "service": "http", "source_ip": "192.168.65.1", "source_port": 58467, "event_type": "connection_established", "details": {"message": "New connection to http honeypot"}}
+{"timestamp": "2025-09-06T13:47:11.087765", "service": "http", "source_ip": "192.168.65.1", "source_port": 58467, "event_type": "http_request", "details": {"method": "GET", "path": "/", "raw_request": "GET / HTTP/1.1\r\nHost: localhost:8080\r\nUser-Agent: curl/8.15.0\r\nAccept: */*\r\n\r\n"}}
+{"timestamp": "2025-09-06T14:23:03.600222", "service": "mqtt", "source_ip": "192.168.65.1", "source_port": 51280, "event_type": "connection_established", "details": {"message": "New connection to mqtt honeypot"}}
+{"timestamp": "2025-09-06T14:23:03.705009", "service": "mqtt", "source_ip": "192.168.65.1", "source_port": 51280, "event_type": "mqtt_probe", "details": {"message": "MQTT connection attempt detected"}}
+{"timestamp": "2025-09-06T17:32:06.081859", "service": "telnet", "source_ip": "172.18.0.1", "source_port": 65462, "event_type": "connection_established", "details": {"message": "New connection to telnet honeypot"}}
+{"timestamp": "2025-09-06T17:32:19.152079", "service": "telnet", "source_ip": "172.18.0.1", "source_port": 65462, "event_type": "login_attempt", "details": {"username": "", "password": ""}}
+{"timestamp": "2025-09-06T17:32:21.584006", "service": "telnet", "source_ip": "172.18.0.1", "source_port": 63074, "event_type": "connection_established", "details": {"message": "New connection to telnet honeypot"}}
+{"timestamp": "2025-09-06T17:32:26.182078", "service": "telnet", "source_ip": "172.18.0.1", "source_port": 63074, "event_type": "login_attempt", "details": {"username": "", "password": ""}}

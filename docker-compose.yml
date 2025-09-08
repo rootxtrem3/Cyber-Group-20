@@ -1,51 +1,16 @@
-# docker-compose.yml
-version: '3.8'
-
 services:
-  data-processor:
+  honeypot:
     build: .
-    container_name: iot-data-processor
+    container_name: iot_honeypot
+    ports:
+      # Dashboard & API Port
+      - "5000:5000"
+      # Honeypot Service Ports
+      - "8080:8080" # Fake IP Camera (HTTP)
+      - "2323:2323" # Fake Telnet
+      - "1883:1883" # Fake MQTT
     volumes:
-      - ./logs:/app/logs
-      - /path/to/geolite/db:/data  # Mount GeoIP database
-    environment:
-      - MONGODB_URL=mongodb://mongodb:27017/
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - REDIS_DB=0
-      - REDIS_CHANNEL=honeypot-events
-      - GEOIP_DB_PATH=/data/GeoLite2-City.mmdb
-    depends_on:
-      - mongodb
-      - redis
-    networks:
-      - honeypot-net
+      # This is crucial: it saves the SQLite DB and JSON logs to your local disk
+      # so data persists even if the container is removed and rebuilt.
+      - ./app/db:/app/db
     restart: unless-stopped
-
-  mongodb:
-    image: mongo:5
-    container_name: iot-mongodb
-    volumes:
-      - mongodb_data:/data/db
-    environment:
-      - MONGO_INITDB_DATABASE=honeypot
-    networks:
-      - honeypot-net
-    restart: unless-stopped
-
-  redis:
-    image: redis:6-alpine
-    container_name: iot-redis
-    volumes:
-      - redis_data:/data
-    networks:
-      - honeypot-net
-    restart: unless-stopped
-
-volumes:
-  mongodb_data:
-  redis_data:
-
-networks:
-  honeypot-net:
-    driver: bridge
