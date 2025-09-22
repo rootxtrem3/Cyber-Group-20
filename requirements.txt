@@ -1,6 +1,0 @@
-# requirements.txt
-pymongo==4.2.0
-redis==4.3.4
-geoip2==4.6.0
-watchdog==2.1.9
-python-dateutil==2.8.2
