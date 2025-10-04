@@ -2,12 +2,12 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { useState, useEffect } from 'react';
 import Login from './components/Login';
 import AdminDashboard from './components/AdminDashboard';
-import UserDashboard from './components/UserDashboard';
 import './App.css';
 
 function App() {
   const [user, setUser] = useState(null);
 
+  // Load user from localStorage on initial render
   useEffect(() => {
     const savedUser = JSON.parse(localStorage.getItem('user'));
     if (savedUser) setUser(savedUser);
@@ -27,10 +27,33 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/login" element={user ? <Navigate to={user.role==='admin'?'/admin':'/dashboard'} /> : <Login onLogin={handleLogin} />} />
-        <Route path="/admin" element={user?.role==='admin' ? <AdminDashboard user={user} onLogout={handleLogout} /> : <Navigate to="/login" />} />
-        <Route path="/dashboard" element={user?.role==='user' ? <UserDashboard user={user} onLogout={handleLogout} /> : <Navigate to="/login" />} />
-        <Route path="/" element={<Navigate to={user? user.role==='admin'?'/admin':'/dashboard':'/login'} />} />
+        {/* Default route: show login if no user */}
+        <Route
+          path="/"
+          element={user ? <Navigate to="/admin" /> : <Navigate to="/login" />}
+        />
+
+        {/* Login Route */}
+        <Route
+          path="/login"
+          element={user ? <Navigate to="/admin" /> : <Login onLogin={handleLogin} />}
+        />
+
+        {/* Admin Dashboard Route */}
+        <Route
+          path="/admin"
+          element={
+            user?.role === 'admin'
+              ? <AdminDashboard user={user} onLogout={handleLogout} />
+              : <Navigate to="/login" />
+          }
+        />
+
+        {/* Catch-all Route */}
+        <Route
+          path="*"
+          element={<Navigate to={user ? '/admin' : '/login'} />}
+        />
       </Routes>
     </Router>
   );
