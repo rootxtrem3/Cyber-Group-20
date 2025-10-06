@@ -1,0 +1,25 @@
+filebeat.inputs:
+- type: log
+  enabled: true
+  paths:
+    - /cowrie/log/cowrie.json
+  fields:
+    source: cowrie
+  json.keys_under_root: true
+  json.add_error_key: true
+- type: log
+  enabled: true
+  paths:
+    - /var/lib/dionaea/log/dionaea.json
+  fields:
+    source: dionaea
+  json.keys_under_root: true
+  json.add_error_key: true
+output.logstash:
+  hosts: ["logstash:5044"]
+logging.level: info
+logging.to_files: true
+logging.files:
+  path: /var/log/filebeat
+  name: filebeat
+  keepfiles: 7

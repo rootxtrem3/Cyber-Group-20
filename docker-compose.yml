@@ -1,0 +1,96 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    environment:
+      - API_KEY=${API_KEY}
+      - ADMIN_USER=${ADMIN_USER}
+      - ADMIN_PASS=${ADMIN_PASS}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_TTL=${JWT_TTL}
+      - DATABASE_PATH=${DATABASE_PATH}
+      - NODE_ENV=production
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./backend:/app
+      - /app/node_modules
+      - backend_data:/app/data
+      - ./utils:/utils
+    networks:
+      - threatview-net
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - threatview-net
+
+  cowrie:
+    image: cowrie/cowrie:latest
+    volumes:
+      - cowrie_logs:/cowrie/log
+      - ./utils/cowrie.cfg:/cowrie/cowrie-git/etc/cowrie.cfg
+    ports:
+      - "2222:2222"
+      - "2223:2223"
+    networks:
+      - threatview-net
+
+  dionaea:
+    image: dinotools/dionaea:latest
+    volumes:
+      - dionaea_logs:/var/lib/dionaea
+      - ./utils/dionaea.cfg:/etc/dionaea/dionaea.cfg
+    ports:
+      - "21:21"
+      - "42:42"
+      - "135:135"
+      - "443:443"
+      - "445:445"
+      - "1433:1433"
+      - "1723:1723"
+      - "1883:1883"
+      - "1900:1900"
+      - "3306:3306"
+      - "5060:5060"
+      - "5061:5061"
+    networks:
+      - threatview-net
+
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:8.5.0
+    user: root
+    volumes:
+      - ./utils/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+      - cowrie_logs:/cowrie/log:ro
+      - dionaea_logs:/var/lib/dionaea:ro
+    depends_on:
+      - logstash
+    networks:
+      - threatview-net
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.5.0
+    volumes:
+      - ./utils/logstash.conf:/usr/share/logstash/pipeline/logstash.conf:ro
+    environment:
+      - API_KEY=${API_KEY}
+      - BACKEND_URL=http://backend:3000
+      - XPACK_MONITORING_ENABLED=false
+    depends_on:
+      - backend
+    networks:
+      - threatview-net
+
+volumes:
+  backend_data:
+  cowrie_logs:
+  dionaea_logs:
+
+networks:
+  threatview-net:
+    driver: bridge
