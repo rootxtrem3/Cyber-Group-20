@@ -1,0 +1,6 @@
+# requirements.txt
+pymongo==4.3.3
+websockets==11.0.3
+geoip2==4.6.0
+python-dateutil==2.8.2
+asyncio==3.4.3
