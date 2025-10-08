@@ -1,96 +1,85 @@
+# docker-compose.yml
 version: '3.8'
 
 services:
-  backend:
-    build: ./backend
-    environment:
-      - API_KEY=${API_KEY}
-      - ADMIN_USER=${ADMIN_USER}
-      - ADMIN_PASS=${ADMIN_PASS}
-      - JWT_SECRET=${JWT_SECRET}
-      - JWT_TTL=${JWT_TTL}
-      - DATABASE_PATH=${DATABASE_PATH}
-      - NODE_ENV=production
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./backend:/app
-      - /app/node_modules
-      - backend_data:/app/data
-      - ./utils:/utils
-    networks:
-      - threatview-net
-
-  frontend:
-    build: ./frontend
+  # MongoDB Database
+  mongodb:
+    image: mongo:6.0
+    container_name: honeypot-mongodb
     ports:
-      - "80:80"
-    depends_on:
-      - backend
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+      - ./database/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+    environment:
+      - MONGO_INITDB_DATABASE=honeypot
     networks:
-      - threatview-net
+      - honeypot_net
+    restart: unless-stopped
 
+  # Data Logger & Parser (YOUR SERVICE)
+  data-logger:
+    build: ./data-logger
+    container_name: honeypot-data-logger
+    ports:
+      - "8765:8765"  # WebSocket server
+    volumes:
+      - ./logs:/app/logs
+      - ./data-logger-parser/config:/app/config:ro
+    environment:
+      - MONGO_URI=mongodb://mongodb:27017/
+      - LOG_LEVEL=INFO
+    networks:
+      - honeypot_net
+    restart: unless-stopped
+    depends_on:
+      - mongodb
+
+  # Cowrie Honeypot
   cowrie:
     image: cowrie/cowrie:latest
-    volumes:
-      - cowrie_logs:/cowrie/log
-      - ./utils/cowrie.cfg:/cowrie/cowrie-git/etc/cowrie.cfg
+    container_name: honeypot-cowrie
     ports:
-      - "2222:2222"
-      - "2223:2223"
-    networks:
-      - threatview-net
-
-  dionaea:
-    image: dinotools/dionaea:latest
+      - "2222:2222"  # SSH
+      - "2223:2223"  # Telnet
     volumes:
-      - dionaea_logs:/var/lib/dionaea
-      - ./utils/dionaea.cfg:/etc/dionaea/dionaea.cfg
+      - ./cowrie/cowrie.cfg:/cowrie/cowrie-git/etc/cowrie.cfg:ro
+      - cowrie_logs:/cowrie/cowrie-git/var/log/cowrie
+    networks:
+      - honeypot_net
+    restart: unless-stopped
+
+  # HTTP Honeypot
+  http-honeypot:
+    build: ./http-honeypot
+    container_name: honeypot-http
     ports:
-      - "21:21"
-      - "42:42"
-      - "135:135"
-      - "443:443"
-      - "445:445"
-      - "1433:1433"
-      - "1723:1723"
-      - "1883:1883"
-      - "1900:1900"
-      - "3306:3306"
-      - "5060:5060"
-      - "5061:5061"
-    networks:
-      - threatview-net
-
-  filebeat:
-    image: docker.elastic.co/beats/filebeat:8.5.0
-    user: root
+      - "80:8080"
+      - "443:8443"
     volumes:
-      - ./utils/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
-      - cowrie_logs:/cowrie/log:ro
-      - dionaea_logs:/var/lib/dionaea:ro
-    depends_on:
-      - logstash
+      - ./http-honeypot:/app:ro
     networks:
-      - threatview-net
+      - honeypot_net
+    restart: unless-stopped
 
-  logstash:
-    image: docker.elastic.co/logstash/logstash:8.5.0
+  # Dashboard
+  dashboard:
+    build: ./dashboard
+    container_name: honeypot-dashboard
+    ports:
+      - "3000:3000"
     volumes:
-      - ./utils/logstash.conf:/usr/share/logstash/pipeline/logstash.conf:ro
-    environment:
-      - API_KEY=${API_KEY}
-      - BACKEND_URL=http://backend:3000
-      - XPACK_MONITORING_ENABLED=false
-    depends_on:
-      - backend
+      - ./dashboard:/app:ro
     networks:
-      - threatview-net
+      - honeypot_net
+    restart: unless-stopped
+    depends_on:
+      - data-logger
 
 volumes:
-  backend_data:
+  mongodb_data:
   cowrie_logs:
-  dionaea_logs:
 
 networks:
-  threatview-net:
+  honeypot_net:
     driver: bridge
