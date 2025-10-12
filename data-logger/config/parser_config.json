@@ -1,0 +1,24 @@
+# config/parser_config.json
+{
+    "database": {
+        "connection_string": "mongodb://mongodb:27017/",
+        "database_name": "honeypot",
+        "max_connections": 10
+    },
+    "websocket": {
+        "host": "0.0.0.0",
+        "port": 8765,
+        "ping_interval": 30
+    },
+    "processing": {
+        "batch_size": 100,
+        "poll_interval_seconds": 2,
+        "max_retries": 3
+    },
+    "logging": {
+        "level": "INFO",
+        "file_path": "/app/logs/processor.log",
+        "max_file_size_mb": 100,
+        "backup_count": 5
+    }
+}
