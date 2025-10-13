@@ -70,8 +70,8 @@ This makes it an ideal platform for research, teaching, and real-time threat ana
 - A **Linux-based** operating system  
 - **Docker** and **Docker Compose** installed  
 
-Once prerequisites are met, simply run the setup script to deploy the entire environment.
+After the requirements are met, clone this repo. the cd into the cloned directory. use docker compose up --build to build it all
 
 ---
 
-© 2025 ThreatView Project. All rights reserved.
+
