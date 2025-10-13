@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      - BIND_ADDR=${BIND_ADDR:-0.0.0.0}
+      - BACKEND_HOST=${BACKEND_HOST:-0.0.0.0}
+      - BACKEND_PORT=${BACKEND_PORT:-8000}
+      - DATABASE_URL=sqlite:///./data/honeypot.db
+      - SECRET_KEY=${SECRET_KEY:-0Aruhp0ZNw9-HACH3ii5cb6mQpWHFk7f3j2_RXDPSAs}
+      - JWT_ALGORITHM=${JWT_ALGORITHM:-HS256}
+      - GEOIP_ENABLED=${GEOIP_ENABLED:-true}
+      - GEOIP_DB_PATH=${GEOIP_DB_PATH:-/app/data/GeoLite2-City.mmdb}
+      - EMAIL_ALERTS_ENABLED=${EMAIL_ALERTS_ENABLED:-false}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASS=${SMTP_PASS}
+      - ALERT_EMAIL=${ALERT_EMAIL}
+    volumes:
+      - ./data:/app/data
+    depends_on:
+      - init-db
+
+  ssh-honeypot:
+    build: ./honeypots/ssh
+    ports:
+      - "2222:2222"
+    environment:
+      - BIND_ADDR=${BIND_ADDR:-127.0.0.1}
+      - SSH_PORT=${SSH_PORT:-2222}
+      - BACKEND_URL=http://backend:8000
+    volumes:
+      - ./data:/app/data
+
+  http-honeypot:
+    build: ./honeypots/http
+    ports:
+      - "8080:8080"
+    environment:
+      - BIND_ADDR=${BIND_ADDR:-127.0.0.1}
+      - HTTP_PORT=${HTTP_PORT:-8080}
+      - BACKEND_URL=http://backend:8000
+    volumes:
+      - ./data:/app/data
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_BACKEND_URL=http://localhost:8000
+    depends_on:
+      - backend
+
+  init-db:
+    build: ./backend
+    command: ["python", "scripts/init_db.py"]
+    volumes:
+      - ./data:/app/data
+    environment:
+      - DATABASE_URL=sqlite:///./data/honeypot.db
+
+volumes:
+  data:
