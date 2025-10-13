@@ -19,8 +19,8 @@ The entire stack — from honeypots to log processors and the web UI — is defi
 ### 🕵️‍♂️ Multi-Honeypot Environment
 Deploys multiple honeypots to capture diverse attack vectors:
 
-- **Cowrie** — A medium-interaction SSH/Telnet honeypot capturing brute-force attempts and shell interactions.  
-- **Dionaea** — A low-interaction honeypot designed to trap malware by emulating SMB, FTP, HTTP, MSSQL, and more.
+- **SSH Honeypot** — A medium-interaction SSH honeypot capturing brute-force attempts and shell interactions.  
+- **HTTP Honeypot** — A low-interaction honeypot designed to trap malware by emulating SMB, FTP, HTTP, MSSQL, and more.
 
 ### 📊 Real-time Dashboard
 A minimal, neon-themed web dashboard displays:
@@ -29,25 +29,13 @@ A minimal, neon-themed web dashboard displays:
 - Summaries of attackers, ports, and malware activity  
 
 ### ⚙️ Backend & Log Enrichment
-A dedicated **Node.js backend**:
 - Receives honeypot events  
 - Enriches them with **GeoIP** data (country, city, coordinates)  
 - Stores all activity in a **persistent SQLite** database  
-- Pushes **live updates** to the frontend via **WebSockets**  
-
-### 🔄 Flexible Log Pipeline
-Two modes of operation:
-1. **Filebeat → Logstash** pipeline for enterprise-grade log parsing and forwarding.  
-2. **Direct-watch mode** where the backend monitors honeypot logs directly.
+- Pushes **live updates** to the frontend via **WebSockets**  .
 
 ### 🧩 Containerized & Isolated
 All services run within **Docker containers**, ensuring complete isolation from the host and clean lifecycle management.
-
-### ⚡ Single-Script Deployment
-A single **bash script** generates the entire infrastructure:
-- Frontend and backend setup  
-- Docker Compose configuration  
-- Utility and data directories  
 
 ---
 
