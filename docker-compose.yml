@@ -12,7 +12,7 @@ services:
       - BACKEND_HOST=0.0.0.0
       - BACKEND_PORT=8000
     volumes:
-      - data:/app/data
+      - ./data:/app/data
     depends_on:
       - init-db
     restart: unless-stopped
@@ -32,7 +32,7 @@ services:
       - SSH_PORT=2222
       - BACKEND_URL=http://backend:8000
     volumes:
-      - data:/app/data
+      - ./data:/app/data
     depends_on:
       backend:
         condition: service_healthy
@@ -47,7 +47,7 @@ services:
       - HTTP_PORT=8080
       - BACKEND_URL=http://backend:8000
     volumes:
-      - data:/app/data
+      - ./data:/app/data
     depends_on:
       backend:
         condition: service_healthy
