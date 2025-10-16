@@ -6,46 +6,54 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - BIND_ADDR=${BIND_ADDR:-0.0.0.0}
-      - BACKEND_HOST=${BACKEND_HOST:-0.0.0.0}
-      - BACKEND_PORT=${BACKEND_PORT:-8000}
       - DATABASE_URL=sqlite:///./data/honeypot.db
-      - SECRET_KEY=${SECRET_KEY:-0Aruhp0ZNw9-HACH3ii5cb6mQpWHFk7f3j2_RXDPSAs}
-      - JWT_ALGORITHM=${JWT_ALGORITHM:-HS256}
-      - GEOIP_ENABLED=${GEOIP_ENABLED:-true}
-      - GEOIP_DB_PATH=${GEOIP_DB_PATH:-/app/data/GeoLite2-City.mmdb}
-      - EMAIL_ALERTS_ENABLED=${EMAIL_ALERTS_ENABLED:-false}
-      - SMTP_HOST=${SMTP_HOST}
-      - SMTP_PORT=${SMTP_PORT:-587}
-      - SMTP_USER=${SMTP_USER}
-      - SMTP_PASS=${SMTP_PASS}
-      - ALERT_EMAIL=${ALERT_EMAIL}
+      - GEOIP_DB_PATH=/app/data/GeoLite2-City.mmdb
+      - BIND_ADDR=0.0.0.0
+      - BACKEND_HOST=0.0.0.0
+      - BACKEND_PORT=8000
     volumes:
-      - ./data:/app/data
+      - data:/app/data
     depends_on:
       - init-db
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import requests; import sys; sys.exit(0 if requests.get('http://localhost:8000/api/v1/stats').status_code == 200 else 1)\""]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 15s
 
   ssh-honeypot:
     build: ./honeypots/ssh
     ports:
-      - "2222:2222"
+      - "22222:2222"
     environment:
-      - BIND_ADDR=${BIND_ADDR:-127.0.0.1}
-      - SSH_PORT=${SSH_PORT:-2222}
+      - BIND_ADDR=0.0.0.0
+      - SSH_PORT=2222
       - BACKEND_URL=http://backend:8000
     volumes:
-      - ./data:/app/data
+      - data:/app/data
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
 
   http-honeypot:
     build: ./honeypots/http
     ports:
-      - "8080:8080"
+      - "808:8080"
     environment:
-      - BIND_ADDR=${BIND_ADDR:-127.0.0.1}
-      - HTTP_PORT=${HTTP_PORT:-8080}
+      - BIND_ADDR=0.0.0.0
+      - HTTP_PORT=8080
       - BACKEND_URL=http://backend:8000
     volumes:
-      - ./data:/app/data
+      - data:/app/data
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+    # Removed chmod commands for Windows
+    command: python -u server.py
 
   frontend:
     build: ./frontend
@@ -54,15 +62,19 @@ services:
     environment:
       - VITE_BACKEND_URL=http://localhost:8000
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
 
   init-db:
     build: ./backend
     command: ["python", "scripts/init_db.py"]
     volumes:
-      - ./data:/app/data
+      - data:/app/data
     environment:
       - DATABASE_URL=sqlite:///./data/honeypot.db
+    restart: "no"
 
 volumes:
   data:
+    driver: local
